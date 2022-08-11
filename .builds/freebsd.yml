@@ -4,7 +4,7 @@ packages:
   - gmake
   - cmake
 sources:
-  - https://github.com/messense/jieba-rs
+  - https://github.com/sirodeneko/jieba-rs
 tasks:
   - test: |
       cd jieba-rs

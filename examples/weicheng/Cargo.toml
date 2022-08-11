@@ -5,7 +5,7 @@ authors = ["messense <messense@icloud.com>"]
 edition = "2018"
 
 [dependencies]
-jieba-rs = { path = "../.." }
+jieba-rs-siro = { path = "../.." }
 
 [target.'cfg(unix)'.dependencies]
 jemallocator = "0.3.2"

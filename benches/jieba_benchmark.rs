@@ -2,7 +2,7 @@
 extern crate criterion;
 
 use criterion::{black_box, Criterion, Throughput};
-use jieba_rs::{Jieba, KeywordExtract, TextRank, TokenizeMode, TFIDF};
+use jieba_rs_siro::{Jieba, KeywordExtract, TextRank, TokenizeMode, TFIDF};
 use lazy_static::lazy_static;
 
 #[cfg(unix)]

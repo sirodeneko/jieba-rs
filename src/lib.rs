@@ -221,6 +221,10 @@ pub struct Jieba {
     cedar: Cedar,
     total: usize,
     longest_word_len: usize,
+    re_han: Regex,
+    re_skip: Regex,
+    re_han_cut: Regex,
+    re_skip_cut: Regex,
 }
 
 #[cfg(feature = "default-dict")]
@@ -238,6 +242,10 @@ impl Jieba {
             cedar: Cedar::new(),
             total: 0,
             longest_word_len: 0,
+            re_han: RE_HAN_DEFAULT.clone(),
+            re_skip: RE_SKIP_DEAFULT.clone(),
+            re_han_cut: RE_HAN_CUT_ALL.clone(),
+            re_skip_cut: RE_SKIP_CUT_ALL.clone(),
         }
     }
 
@@ -252,6 +260,26 @@ impl Jieba {
         let mut default_dict = BufReader::new(DEFAULT_DICT.as_bytes());
         instance.load_dict(&mut default_dict).unwrap();
         instance
+    }
+
+    /// Set set_re_han
+    pub fn set_re_han(&mut self, re: Regex) {
+        self.re_han = re;
+    }
+
+    /// Set set_re_han_cut
+    pub fn set_re_han_cut(&mut self, re: Regex) {
+        self.re_han_cut = re;
+    }
+
+    /// Set set_re_skip
+    pub fn set_re_skip(&mut self, re: Regex) {
+        self.re_skip = re;
+    }
+
+    /// Set re_skip_cut
+    pub fn set_re_skip_cut(&mut self, re: Regex) {
+        self.re_skip_cut = re;
     }
 
     /// Create a new instance with dict
@@ -570,8 +598,8 @@ impl Jieba {
     fn cut_internal<'a>(&self, sentence: &'a str, cut_all: bool, hmm: bool) -> Vec<&'a str> {
         let heuristic_capacity = sentence.len() / 2;
         let mut words = Vec::with_capacity(heuristic_capacity);
-        let re_han: &Regex = if cut_all { &*RE_HAN_CUT_ALL } else { &*RE_HAN_DEFAULT };
-        let re_skip: &Regex = if cut_all { &*RE_SKIP_CUT_ALL } else { &*RE_SKIP_DEAFULT };
+        let re_han: &Regex = if cut_all { &self.re_han_cut } else { &self.re_han };
+        let re_skip: &Regex = if cut_all { &self.re_skip_cut } else { &self.re_skip };
         let splitter = SplitMatches::new(&re_han, sentence);
         let mut route = Vec::with_capacity(heuristic_capacity);
         let mut dag = StaticSparseDAG::with_size_hint(heuristic_capacity);
@@ -861,7 +889,7 @@ mod tests {
                 "拍卖会",
                 "卖",
                 "会",
-                "def"
+                "def",
             ]
         );
 
@@ -886,7 +914,7 @@ mod tests {
                 "华大",
                 "大",
                 "大学",
-                "学"
+                "学",
             ]
         );
     }
@@ -955,7 +983,7 @@ mod tests {
                 "京都",
                 "大学",
                 "日本京都大学",
-                "深造"
+                "深造",
             ]
         );
     }
@@ -974,56 +1002,65 @@ mod tests {
                 Tag { word: "是", tag: "v" },
                 Tag {
                     word: "拖拉机",
-                    tag: "n"
+                    tag: "n",
                 },
                 Tag {
-                    word: "学院", tag: "n"
+                    word: "学院",
+                    tag: "n",
                 },
                 Tag {
                     word: "手扶拖拉机",
-                    tag: "n"
+                    tag: "n",
                 },
                 Tag {
-                    word: "专业", tag: "n"
+                    word: "专业",
+                    tag: "n",
                 },
                 Tag { word: "的", tag: "uj" },
                 Tag { word: "。", tag: "x" },
                 Tag {
-                    word: "不用", tag: "v"
+                    word: "不用",
+                    tag: "v",
                 },
                 Tag {
-                    word: "多久", tag: "m"
+                    word: "多久",
+                    tag: "m",
                 },
                 Tag { word: "，", tag: "x" },
                 Tag { word: "我", tag: "r" },
                 Tag { word: "就", tag: "d" },
                 Tag { word: "会", tag: "v" },
                 Tag {
-                    word: "升职", tag: "v"
+                    word: "升职",
+                    tag: "v",
                 },
                 Tag {
                     word: "加薪",
-                    tag: "nr"
+                    tag: "nr",
                 },
                 Tag { word: "，", tag: "x" },
                 Tag {
-                    word: "当上", tag: "t"
+                    word: "当上",
+                    tag: "t",
                 },
                 Tag {
                     word: "CEO",
-                    tag: "eng"
+                    tag: "eng",
                 },
                 Tag { word: "，", tag: "x" },
                 Tag {
-                    word: "走上", tag: "v"
+                    word: "走上",
+                    tag: "v",
                 },
                 Tag {
-                    word: "人生", tag: "n"
+                    word: "人生",
+                    tag: "n",
                 },
                 Tag {
-                    word: "巅峰", tag: "n"
+                    word: "巅峰",
+                    tag: "n",
                 },
-                Tag { word: "。", tag: "x" }
+                Tag { word: "。", tag: "x" },
             ]
         );
 
@@ -1032,46 +1069,52 @@ mod tests {
             tags,
             vec![
                 Tag {
-                    word: "今天", tag: "t"
+                    word: "今天",
+                    tag: "t",
                 },
                 Tag {
                     word: "纽约",
-                    tag: "ns"
+                    tag: "ns",
                 },
                 Tag { word: "的", tag: "uj" },
                 Tag {
-                    word: "天气", tag: "n"
+                    word: "天气",
+                    tag: "n",
                 },
                 Tag {
-                    word: "真好", tag: "d"
+                    word: "真好",
+                    tag: "d",
                 },
                 Tag { word: "啊", tag: "zg" },
                 Tag { word: "，", tag: "x" },
                 Tag {
                     word: "京华",
-                    tag: "nz"
+                    tag: "nz",
                 },
                 Tag {
                     word: "大酒店",
-                    tag: "n"
+                    tag: "n",
                 },
                 Tag { word: "的", tag: "uj" },
                 Tag {
-                    word: "张尧", tag: "x"
+                    word: "张尧",
+                    tag: "x",
                 }, // XXX: missing in dict
                 Tag {
-                    word: "经理", tag: "n"
+                    word: "经理",
+                    tag: "n",
                 },
                 Tag { word: "吃", tag: "v" },
                 Tag { word: "了", tag: "ul" },
                 Tag {
-                    word: "一只", tag: "m"
+                    word: "一只",
+                    tag: "m",
                 },
                 Tag {
                     word: "北京烤鸭",
-                    tag: "n"
+                    tag: "n",
                 },
-                Tag { word: "。", tag: "x" }
+                Tag { word: "。", tag: "x" },
             ]
         );
     }
@@ -1086,13 +1129,13 @@ mod tests {
                 Token {
                     word: "南京市",
                     start: 0,
-                    end: 3
+                    end: 3,
                 },
                 Token {
                     word: "长江大桥",
                     start: 3,
-                    end: 7
-                }
+                    end: 7,
+                },
             ]
         );
 
@@ -1103,33 +1146,33 @@ mod tests {
                 Token {
                     word: "南京",
                     start: 0,
-                    end: 2
+                    end: 2,
                 },
                 Token {
                     word: "京市",
                     start: 1,
-                    end: 3
+                    end: 3,
                 },
                 Token {
                     word: "南京市",
                     start: 0,
-                    end: 3
+                    end: 3,
                 },
                 Token {
                     word: "长江",
                     start: 3,
-                    end: 5
+                    end: 5,
                 },
                 Token {
                     word: "大桥",
                     start: 5,
-                    end: 7
+                    end: 7,
                 },
                 Token {
                     word: "长江大桥",
                     start: 3,
-                    end: 7
-                }
+                    end: 7,
+                },
             ]
         );
 
@@ -1140,33 +1183,33 @@ mod tests {
                 Token {
                     word: "我们",
                     start: 0,
-                    end: 2
+                    end: 2,
                 },
                 Token {
                     word: "中",
                     start: 2,
-                    end: 3
+                    end: 3,
                 },
                 Token {
                     word: "出",
                     start: 3,
-                    end: 4
+                    end: 4,
                 },
                 Token {
                     word: "了",
                     start: 4,
-                    end: 5
+                    end: 5,
                 },
                 Token {
                     word: "一个",
                     start: 5,
-                    end: 7
+                    end: 7,
                 },
                 Token {
                     word: "叛徒",
                     start: 7,
-                    end: 9
-                }
+                    end: 9,
+                },
             ]
         );
         let tokens = jieba.tokenize("我们中出了一个叛徒", TokenizeMode::Default, true);
@@ -1176,28 +1219,28 @@ mod tests {
                 Token {
                     word: "我们",
                     start: 0,
-                    end: 2
+                    end: 2,
                 },
                 Token {
                     word: "中出",
                     start: 2,
-                    end: 4
+                    end: 4,
                 },
                 Token {
                     word: "了",
                     start: 4,
-                    end: 5
+                    end: 5,
                 },
                 Token {
                     word: "一个",
                     start: 5,
-                    end: 7
+                    end: 7,
                 },
                 Token {
                     word: "叛徒",
                     start: 7,
-                    end: 9
-                }
+                    end: 9,
+                },
             ]
         );
 
@@ -1208,23 +1251,23 @@ mod tests {
                 Token {
                     word: "永和",
                     start: 0,
-                    end: 2
+                    end: 2,
                 },
                 Token {
                     word: "服装",
                     start: 2,
-                    end: 4
+                    end: 4,
                 },
                 Token {
                     word: "饰品",
                     start: 4,
-                    end: 6
+                    end: 6,
                 },
                 Token {
                     word: "有限公司",
                     start: 6,
-                    end: 10
-                }
+                    end: 10,
+                },
             ]
         );
     }
@@ -1239,33 +1282,33 @@ mod tests {
                 Token {
                     word: "我们",
                     start: 0,
-                    end: 2
+                    end: 2,
                 },
                 Token {
                     word: "中",
                     start: 2,
-                    end: 3
+                    end: 3,
                 },
                 Token {
                     word: "出",
                     start: 3,
-                    end: 4
+                    end: 4,
                 },
                 Token {
                     word: "了",
                     start: 4,
-                    end: 5
+                    end: 5,
                 },
                 Token {
                     word: "一个",
                     start: 5,
-                    end: 7
+                    end: 7,
                 },
                 Token {
                     word: "叛徒",
                     start: 7,
-                    end: 9
-                }
+                    end: 9,
+                },
             ]
         );
         let userdict = "中出 10000";
@@ -1277,28 +1320,28 @@ mod tests {
                 Token {
                     word: "我们",
                     start: 0,
-                    end: 2
+                    end: 2,
                 },
                 Token {
                     word: "中出",
                     start: 2,
-                    end: 4
+                    end: 4,
                 },
                 Token {
                     word: "了",
                     start: 4,
-                    end: 5
+                    end: 5,
                 },
                 Token {
                     word: "一个",
                     start: 5,
-                    end: 7
+                    end: 7,
                 },
                 Token {
                     word: "叛徒",
                     start: 7,
-                    end: 9
-                }
+                    end: 9,
+                },
             ]
         );
     }
@@ -1313,28 +1356,28 @@ mod tests {
                 Token {
                     word: "我们",
                     start: 0,
-                    end: 2
+                    end: 2,
                 },
                 Token {
                     word: "中出",
                     start: 2,
-                    end: 4
+                    end: 4,
                 },
                 Token {
                     word: "了",
                     start: 4,
-                    end: 5
+                    end: 5,
                 },
                 Token {
                     word: "一个",
                     start: 5,
-                    end: 7
+                    end: 7,
                 },
                 Token {
                     word: "叛徒",
                     start: 7,
-                    end: 9
-                }
+                    end: 9,
+                },
             ]
         );
         let userdict = "出了 10000";
@@ -1346,28 +1389,28 @@ mod tests {
                 Token {
                     word: "我们",
                     start: 0,
-                    end: 2
+                    end: 2,
                 },
                 Token {
                     word: "中",
                     start: 2,
-                    end: 3
+                    end: 3,
                 },
                 Token {
                     word: "出了",
                     start: 3,
-                    end: 5
+                    end: 5,
                 },
                 Token {
                     word: "一个",
                     start: 5,
-                    end: 7
+                    end: 7,
                 },
                 Token {
                     word: "叛徒",
                     start: 7,
-                    end: 9
-                }
+                    end: 9,
+                },
             ]
         );
     }
